@@ -1,0 +1,5 @@
+order_id,amount,note
+001,99.90,matched
+002,19.50,different
+004,8.00,right only
+005,22.00,duplicate on left

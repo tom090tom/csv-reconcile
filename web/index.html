@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="两份 CSV 按订单号对账。本地处理，精确金额，识别缺单与重复订单。">
+  <title>CSV Reconcile · 两张表，差在哪里</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar"><a class="brand" href="/">CSV <span>RECONCILE</span></a><span class="privacy"><span class="dot"></span> 文件仅在本机浏览器处理</span></header>
+    <main>
+      <section class="hero">
+        <div><p class="eyebrow">把时间留给判断</p><h1>两张表，<br>差在哪里<span class="accent">。</span></h1><p class="intro">按订单号核对金额，找出缺单与重复。<br>从一堆流水，到一份清楚的差异清单。</p></div>
+        <div class="hero-aside"><p class="step-label">先试一下</p><button id="demo" class="button secondary" type="button">加载示例 ↗</button><p class="muted">示例包含一致、金额差异、<br>两边缺单和重复订单。</p></div>
+      </section>
+
+      <section aria-label="导入两份 CSV" class="upload-grid">
+        <article class="file-card">
+          <div class="card-top"><h2><span class="index">01</span> 左表</h2><span class="card-note">例如：订单流水</span></div>
+          <label class="file-box" for="left-file"><span class="file-title">选择左表 CSV</span><span id="left-name" class="muted">UTF-8 · 逗号分隔 · 最多 5 MB</span><input id="left-file" type="file" accept=".csv,text/csv"></label>
+          <div class="mapping"><label for="left-key">订单号列<select id="left-key" disabled><option value="">先选择文件</option></select></label><label for="left-amount">金额列<select id="left-amount" disabled><option value="">先选择文件</option></select></label></div>
+          <p id="left-preview" class="preview">文件内容只用于本次对账。</p>
+        </article>
+        <article class="file-card">
+          <div class="card-top"><h2><span class="index">02</span> 右表</h2><span class="card-note">例如：结算流水</span></div>
+          <label class="file-box" for="right-file"><span class="file-title">选择右表 CSV</span><span id="right-name" class="muted">UTF-8 · 逗号分隔 · 最多 5 MB</span><input id="right-file" type="file" accept=".csv,text/csv"></label>
+          <div class="mapping"><label for="right-key">订单号列<select id="right-key" disabled><option value="">先选择文件</option></select></label><label for="right-amount">金额列<select id="right-amount" disabled><option value="">先选择文件</option></select></label></div>
+          <p id="right-preview" class="preview">支持两张表使用不同列名。</p>
+        </article>
+      </section>
+
+      <div class="action-bar"><div><label class="remember"><input type="checkbox" id="remember" checked> 记住列映射</label><p class="muted">仅保存列名；同币种比较，差额 = 右表 − 左表。</p></div><button id="compare" class="button primary" type="button" disabled>开始对账 →</button></div>
+      <p id="message" role="status" aria-live="polite">也可以加载示例，先看看结果。</p>
+
+      <section id="results" hidden aria-labelledby="result-title">
+        <div class="section-heading"><div><p class="eyebrow">对账结果</p><h2 id="result-title">差异，一目了然。</h2></div><button id="download" class="button secondary" type="button">导出全部报告 ↓</button></div>
+        <div id="stats" class="stats" aria-label="对账汇总"></div>
+        <div class="table-toolbar"><label for="filter">查看<select id="filter"><option value="all">全部订单</option><option value="issues">仅异常</option><option value="matched">一致</option><option value="amount_mismatch">金额差异</option><option value="left_only">仅左表</option><option value="right_only">仅右表</option><option value="duplicate">重复订单</option></select></label><span id="row-count" class="muted"></span></div>
+        <div class="table-scroll"><table><thead><tr><th scope="col">状态</th><th scope="col">订单号</th><th scope="col">左表金额</th><th scope="col">右表金额</th><th scope="col">差额（右 − 左）</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <p class="footnote">重复订单展示各笔金额，需人工核查。导出报告包含全部结果；在表格软件导入时，请将订单号列设为文本以保留前导零。</p>
+      </section>
+    </main>
+    <footer><span>CSV Reconcile</span><span>两张表 · 一个明确的答案</span></footer>
+  </div>
+</body>
+</html>
