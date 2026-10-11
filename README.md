@@ -78,7 +78,7 @@ npm run check
 
 `src/` 是共享 CSV、金额与报告模块；`web/` 是界面；`bin/` 是 CLI 和回环地址静态服务；`tests/` 验证边界与实际运行入口。
 
-CI 尚未启用：当前推送凭据没有 GitHub `workflow` 权限。已提供 [CI 模板](docs/ci-template.yml)，具备工作流写入权限时可放入 `.github/workflows/ci.yml`，验证 Linux/Windows 与 Node.js 22/24。本地已验证 Windows / Node.js 24.20.0 的 55 项测试。
+CI 尚未启用：当前推送凭据没有 GitHub `workflow` 权限。已提供 [CI 模板](docs/ci-template.yml)，具备工作流写入权限时可放入 `.github/workflows/ci.yml`，验证 Linux/Windows 与 Node.js 22/24。本地已验证 Windows / Node.js 24.20.0 的 56 项测试。
 
 技术取舍：金额使用整数分避免浮点误差；重复订单保留原笔数避免误报一致；静态服务只提供固定资源且拒绝上传，业务数据始终留在浏览器内。列映射仅含列名，保存在当前浏览器本机存储。限制文件规模以控制内存占用，后续扩展依据实际反馈。
 

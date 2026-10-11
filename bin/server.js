@@ -22,6 +22,7 @@ export function createAppServer() {
     response.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
     const port = server.address()?.port;
     const localHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
+    if (port === 80) { localHosts.add('127.0.0.1'); localHosts.add('localhost'); }
     const origin = request.headers.origin;
     if (!localHosts.has(request.headers.host?.toLowerCase())
       || (origin !== undefined && ![...localHosts].some(host => origin === `http://${host}`))
