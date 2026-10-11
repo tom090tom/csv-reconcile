@@ -95,3 +95,9 @@ test('export preserves commas and every amount of a duplicate', () => {
   assert.equal(parsed.rows[0][1], 'A,B');
   assert.equal(parsed.rows[0][2], '1.00; 2.00');
 });
+for (const key of ['+cmd', '-cmd', '@SUM(A1)', '\u0000=1+1', '＝1+1', '＋cmd', '－cmd', '＠SUM(A1)']) {
+  test(`export neutralizes formula-like key ${JSON.stringify(key)}`, () => {
+    const records = [{ key, status: 'left_only', leftAmounts: ['1.00'], rightAmounts: [], difference: null }];
+    assert.equal(parseCSV(reportCSV(records)).rows[0][1], `'${key}`);
+  });
+}

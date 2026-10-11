@@ -18,7 +18,7 @@ cd csv-reconcile
 npm start
 ```
 
-打开 <http://127.0.0.1:4173>，点击“加载示例”，再点击“开始对账”。不需要 `npm install`。仓库目前为私有，克隆需要账号访问权限。
+打开 <http://127.0.0.1:4173>，点击“加载示例”，再点击“开始对账”。不需要 `npm install`。
 
 实际使用：选择两份 UTF-8 CSV → 确认两边订单号与金额列 → 开始对账 → 筛选或导出报告。勾选“记住列映射”后，相同列名会在后续导入时复用；取消勾选会清除已保存映射。
 
@@ -78,8 +78,12 @@ npm run check
 
 `src/` 是共享 CSV、金额与报告模块；`web/` 是界面；`bin/` 是 CLI 和回环地址静态服务；`tests/` 验证边界与实际运行入口。
 
-CI 尚未启用：当前推送凭据没有 GitHub `workflow` 权限。已提供 [CI 模板](docs/ci-template.yml)，具备工作流写入权限时可放入 `.github/workflows/ci.yml`，验证 Linux/Windows 与 Node.js 22/24。本地已验证 Windows / Node.js 24.20.0 的 41 项测试。
+CI 尚未启用：当前推送凭据没有 GitHub `workflow` 权限。已提供 [CI 模板](docs/ci-template.yml)，具备工作流写入权限时可放入 `.github/workflows/ci.yml`，验证 Linux/Windows 与 Node.js 22/24。本地已验证 Windows / Node.js 24.20.0 的 56 项测试。
 
 技术取舍：金额使用整数分避免浮点误差；重复订单保留原笔数避免误报一致；静态服务只提供固定资源且拒绝上传，业务数据始终留在浏览器内。列映射仅含列名，保存在当前浏览器本机存储。限制文件规模以控制内存占用，后续扩展依据实际反馈。
 
-贡献请先描述复现步骤或目标使用场景，改动保持聚焦，并附相关测试。MIT License。
+## 安全、免责与开源协作
+
+本工具用于辅助核查，不替代会计、审计或业务审批。重要决策前请核对原始数据与结果并保留备份。软件按 MIT 许可证现状提供；法律适用范围和使用责任见 [免责说明](DISCLAIMER.md)，安全边界及漏洞私报见 [SECURITY.md](SECURITY.md)。
+
+版本 `0.1.1`，MIT 开源；GitHub 公开不等于把服务部署到公网。`package.json` 的 `private: true` 只阻止误发 npm。协作遵循 [贡献与 Git 规范](CONTRIBUTING.md)：SemVer、约定式提交、短期分支、PR 评审及 [CHANGELOG](CHANGELOG.md)。Issue 与 PR 模板帮助保留复现和验证证据。

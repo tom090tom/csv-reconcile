@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { request } from 'node:http';
 import { createAppServer } from '../bin/server.js';
 import { parseCSV } from '../src/csv.js';
 
@@ -67,5 +68,61 @@ test('local server serves only public application assets and rejects uploads', a
       assert.equal((await fetch(base + path)).status, 404, path);
     }
     assert.equal((await fetch(base, { method: 'POST', body: 'private csv' })).status, 405);
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
+async function localRequest(server, headers, port = server.address().port) {
+  return new Promise((resolve, reject) => {
+    const req = request({ hostname: '127.0.0.1', port, path: '/', headers }, res => {
+      res.resume();
+      res.on('end', () => resolve(res.statusCode));
+    });
+    req.on('error', reject); req.end();
+  });
+}
+
+test('default HTTP port accepts normalized local authorities without allowing foreign hosts', async t => {
+  const server = createAppServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const transportPort = server.address().port;
+  // Exercise port-80 validation without needing to reserve a privileged system port.
+  const address = t.mock.method(server, 'address', () => ({ port: 80 }));
+  try {
+    for (const host of ['127.0.0.1', 'localhost', '127.0.0.1:80', 'localhost:80']) {
+      assert.equal(await localRequest(server, { Host: host, Origin: `http://${host}` }, transportPort), 200, host);
+    }
+    for (const headers of [
+      { Host: 'attacker.example' },
+      { Host: 'localhost:81' },
+      { Host: 'localhost', Origin: 'https://localhost' },
+      { Host: 'localhost', Origin: 'http://localhost:81' }
+    ]) assert.equal(await localRequest(server, headers, transportPort), 403);
+  } finally {
+    address.mock.restore();
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+for (const [name, headers] of [
+  ['foreign Host', { Host: 'attacker.example' }],
+  ['wrong local port', { Host: 'localhost:1' }],
+  ['foreign Origin', { Origin: 'https://attacker.example' }],
+  ['opaque Origin', { Origin: 'null' }],
+  ['cross-site browser request', { 'Sec-Fetch-Site': 'cross-site' }]
+]) test(`local server rejects ${name}`, async () => {
+  const server = createAppServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try { assert.equal(await localRequest(server, headers), 403); }
+  finally { await new Promise(resolve => server.close(resolve)); }
+});
+test('local server accepts matching local origins and sets privacy response headers', async () => {
+  const server = createAppServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const response = await fetch(origin, { headers: { Origin: origin } });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(response.headers.get('cross-origin-resource-policy'), 'same-origin');
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
