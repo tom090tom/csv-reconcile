@@ -9,14 +9,25 @@ const assets = new Map([
   ['/', ['web/index.html', 'text/html']], ['/app.js', ['web/app.js', 'text/javascript']],
   ['/styles.css', ['web/styles.css', 'text/css']], ['/src/csv.js', ['src/csv.js', 'text/javascript']],
   ['/src/reconcile.js', ['src/reconcile.js', 'text/javascript']], ['/src/report.js', ['src/report.js', 'text/javascript']],
-  ['/examples/left.csv', ['examples/left.csv', 'text/csv']], ['/examples/right.csv', ['examples/right.csv', 'text/csv']]
+  ['/examples/left.csv', ['examples/left.csv', 'text/csv']], ['/examples/right.csv', ['examples/right.csv', 'text/csv']],
+  ['/DISCLAIMER.md', ['DISCLAIMER.md', 'text/plain']], ['/SECURITY.md', ['SECURITY.md', 'text/plain']]
 ]);
 
 export function createAppServer() {
-  return createServer(async (request, response) => {
+  const server = createServer(async (request, response) => {
     response.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
     response.setHeader('X-Content-Type-Options', 'nosniff');
     response.setHeader('Cache-Control', 'no-store');
+    response.setHeader('Referrer-Policy', 'no-referrer');
+    response.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+    const port = server.address()?.port;
+    const localHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`]);
+    const origin = request.headers.origin;
+    if (!localHosts.has(request.headers.host?.toLowerCase())
+      || (origin !== undefined && ![...localHosts].some(host => origin === `http://${host}`))
+      || request.headers['sec-fetch-site'] === 'cross-site') {
+      response.writeHead(403); response.end('Only local same-origin requests are allowed'); return;
+    }
     if (!['GET', 'HEAD'].includes(request.method)) {
       response.writeHead(405, { Allow: 'GET, HEAD' }); response.end('Method not allowed'); return;
     }
@@ -30,6 +41,7 @@ export function createAppServer() {
       response.end(request.method === 'HEAD' ? undefined : content);
     } catch { response.writeHead(500); response.end('Unable to load application asset'); }
   });
+  return server;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {

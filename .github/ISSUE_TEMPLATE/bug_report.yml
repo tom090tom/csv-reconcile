@@ -1,0 +1,40 @@
+name: 错误报告
+description: 用脱敏样例报告可复现错误；漏洞请使用私密渠道。
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "请勿上传真实流水、个人信息或凭据。安全漏洞请从 Security 页面私下报告。"
+  - type: input
+    id: version
+    attributes:
+      label: 项目版本或提交
+      placeholder: v0.1.1 或 commit SHA
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 系统、Node.js / 浏览器版本
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 最小复现步骤与合成样例
+      description: 包括两份 CSV 表头、少量合成数据、列映射和运行方式。
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果与脱敏错误信息
+    validations:
+      required: true

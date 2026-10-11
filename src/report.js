@@ -5,7 +5,7 @@ export const statusLabels = Object.freeze({
 function quote(value) {
   let text = String(value ?? '');
   // Quoting alone does not prevent spreadsheet formula execution.
-  if (/^\s*[=+\-@]/u.test(text)) text = `'${text}`;
+  if (/^[\s\u0000-\u001f\u007f]*[=+\-@＝＋－＠]/u.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 

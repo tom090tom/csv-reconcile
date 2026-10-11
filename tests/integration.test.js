@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { request } from 'node:http';
 import { createAppServer } from '../bin/server.js';
 import { parseCSV } from '../src/csv.js';
 
@@ -67,5 +68,39 @@ test('local server serves only public application assets and rejects uploads', a
       assert.equal((await fetch(base + path)).status, 404, path);
     }
     assert.equal((await fetch(base, { method: 'POST', body: 'private csv' })).status, 405);
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
+async function localRequest(server, headers) {
+  return new Promise((resolve, reject) => {
+    const req = request({ hostname: '127.0.0.1', port: server.address().port, path: '/', headers }, res => {
+      res.resume();
+      res.on('end', () => resolve(res.statusCode));
+    });
+    req.on('error', reject); req.end();
+  });
+}
+
+for (const [name, headers] of [
+  ['foreign Host', { Host: 'attacker.example' }],
+  ['wrong local port', { Host: 'localhost:1' }],
+  ['foreign Origin', { Origin: 'https://attacker.example' }],
+  ['opaque Origin', { Origin: 'null' }],
+  ['cross-site browser request', { 'Sec-Fetch-Site': 'cross-site' }]
+]) test(`local server rejects ${name}`, async () => {
+  const server = createAppServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try { assert.equal(await localRequest(server, headers), 403); }
+  finally { await new Promise(resolve => server.close(resolve)); }
+});
+test('local server accepts matching local origins and sets privacy response headers', async () => {
+  const server = createAppServer();
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const response = await fetch(origin, { headers: { Origin: origin } });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(response.headers.get('cross-origin-resource-policy'), 'same-origin');
   } finally { await new Promise(resolve => server.close(resolve)); }
 });
